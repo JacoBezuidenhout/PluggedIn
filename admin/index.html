@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Plugged !N Admin</title>
+</head>
+<body>
+
+<h1>Events</h1>
+<form action="http://whatson.peoplesoft.co.za/event/create" method="post">
+	<label>Title</label><input type="text" name="title"><br/>
+	<label>Body</label><textarea name="body"></textarea><br/>
+	<label>Type</label>
+		<select name="type">
+			<option value="event">Event</option>
+			<option value="training">Training</option>
+			<option value="conference">Conference</option>
+		</select>
+
+	<br/>
+	<label>IMG</label><input type="text" name="img"><br/>
+	<label>Date</label><input type="date" name="date"><br/>
+	<label>Time</label><input type="time" name="time"><br/>
+	<label>Price</label><input type="text" name="price"><br/>
+	<label>Location</label><input type="text" name="location"><br/>
+	<input type="submit">
+</form>
+
+<h1>Special</h1>
+<form action="http://whatson.peoplesoft.co.za/special/create" method="post">
+	<label>Title</label><input type="text" name="title"><br/>
+	<label>Body</label><textarea name="body"></textarea><br/>
+	<label>Type</label>
+		<select name="type">
+			<option value="food">Food</option>
+			<option value="drink">Drink</option>
+			<option value="other">other</option>
+		</select>
+
+	<br/>
+	<label>IMG</label><input type="text" name="img"><br/>
+	<label>End Date</label><input type="date" name="date"><br/>
+	<label>Price</label><input type="text" name="price"><br/>
+	<label>Location</label><input type="text" name="location"><br/>
+	<input type="submit">
+</form>
+
+</body>
+</html>

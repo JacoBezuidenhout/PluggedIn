@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html ng-app="ionicApp">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+
+    <title></title>
+
+    <link href="lib/ionic/css/ionic.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/leaflet.css" /> 
+
+    <script src="lib/ionic/js/ionic.bundle.js"></script>
+    <script src="js/leaflet.js"></script>
+    <script src="js/angular-leaflet-directive.min.js"></script>
+    
+  </head>
+  <body ng-controller="DeviceCtrl as device" style="padding-bottom:10%;">
+
+    <ion-header-bar class="bar-light">
+      <h1 class="title">Plugged !N</h1>
+    </ion-header-bar>
+
+    <ion-tabs class="tabs-light tabs-icon-only">
+
+        <ion-tab title="Events" ng-controller="EventCtrl as event" on-select="event.doRefresh()" icon-on="ion-ios-calendar" icon-off="ion-ios-calendar-outline">
+          <ion-content>
+            <ion-refresher on-refresh="event.doRefresh()"></ion-refresher>
+            <div class="bar bar-subheader item-input-inset">
+              <label class="item-input-wrapper">
+                <i class="icon ion-ios-search placeholder-icon"></i>
+                <input type="search" ng-model="event.searchText" placeholder="Search">
+              </label>
+              <button class="button button-clear" ng-click="event.searchText = ''">
+                Cancel
+              </button>
+            </div>
+            <br/>
+            <br/>
+            <ion-list can-swipe="true">
+                <a class="item item-thumbnail-left" ng-hide="event.events">
+                  <img src="" ng-click="device.show()">
+                  <h2>No Events Found</h2>
+                </a>
+                <ion-item class="item-thumbnail-left" href="#" ng-repeat="e in event.events | filter: event.searchText">
+                  <img src="{{e.img}}">
+                  <h2><i ng-hide="event.isLiked(e)" class="icon ion-heart"></i> {{e.title}}</h2>
+                  <p>{{e.body}}</p>
+                  <p style="position:absolute; bottom:5px"><strong>{{e.price}}</strong></p>
+                  <ion-option-button ng-show="event.isLiked(e)" class="button-info icon ion-heart" ng-click="event.like(e)"></ion-option-button>
+                  <ion-option-button ng-hide="event.isLiked(e)" class="button-balanced icon ion-heart" ng-click="event.dislike(e)"></ion-option-button>
+                  <ion-option-button class="button-positive icon ion-share" ng-click="event.share(e)"></ion-option-button>
+                </ion-item>
+            </ion-list>
+          </ion-content>
+        </ion-tab>
+
+        <ion-tab title="Specials" ng-controller="SpecialCtrl as special" on-select="special.doRefresh()" icon-on="ion-ios-cart" icon-off="ion-ios-cart-outline">
+          <ion-content>
+            <ion-refresher on-refresh="special.doRefresh()"></ion-refresher>
+            <div class="bar bar-subheader item-input-inset">
+              <label class="item-input-wrapper">
+                <i class="icon ion-ios-search placeholder-icon"></i>
+                <input type="search" ng-model="special.searchText" placeholder="Search">
+              </label>
+              <button class="button button-clear" ng-click="special.searchText = ''">
+                Cancel
+              </button>
+            </div>
+            <br/>
+            <br/>
+            <ion-list can-swipe="true">
+                <a class="item item-thumbnail-left" ng-hide="special.specials">
+                  <img src="" ng-click="device.show()">
+                  <h2>No Events Found</h2>
+                </a>
+                <ion-item class="item-thumbnail-left" href="#" ng-repeat="e in special.specials | filter: special.searchText">
+                  <img src="{{e.img}}">
+                  <h2><i ng-hide="special.isLiked(e)" class="icon ion-heart"></i> {{e.title}}</h2>
+                  <p>{{e.body}}</p>
+                  <p style="position:absolute; bottom:5px"><strong>{{e.price}}</strong></p>
+                  <ion-option-button ng-show="special.isLiked(e)" class="button-info icon ion-heart" ng-click="special.like(e)"></ion-option-button>
+                  <ion-option-button ng-hide="special.isLiked(e)" class="button-balanced icon ion-heart" ng-click="special.dislike(e)"></ion-option-button>
+                  <ion-option-button class="button-positive icon ion-share" ng-click="special.share(e)"></ion-option-button>
+                </ion-item>
+            </ion-list>
+          </ion-content>
+        </ion-tab>
+
+        <ion-tab title="Map" ng-controller="MapCtrl as map" on-select="map.doRefresh()" on-deselect="map.unSetMap()"icon-on="ion-ios-location" icon-off="ion-ios-location-outline">
+          <ion-content>
+            <leaflet defaults="map.defaults" center="map.center" markers="map.markers" ng-if="map"></leaflet>
+          </ion-content>
+        </ion-tab>
+
+    </ion-tabs>
+
+  </body>
+  <script type="text/javascript">
+
+  var global;
+  angular.module('ionicApp', ['ionic', 'leaflet-directive'])
+    .controller('DeviceCtrl', function($scope, $http, $ionicLoading) {
+      var t = this;
+      global = t;
+
+      t.show = function(m) {
+        $ionicLoading.show({
+          template: '<ion-spinner></ion-spinner>'
+        });
+      };
+
+      t.hide = function(){
+        $ionicLoading.hide();
+      };
+
+      t.register = function(cb)
+      {       
+        $http.post("http://whatson.peoplesoft.co.za/device/create",{platform: ionic.Platform.device(), count: 0}).
+          then(function(response) {
+            cb(response.data);
+          }, function(response) {
+            console.log("Error",response);
+          });
+      };
+
+      t.login = function()
+      {
+        t.show();
+        if (window.localStorage.deviceId)
+        {
+          $http.get("http://whatson.peoplesoft.co.za/device/" + window.localStorage.deviceId).
+            then(function(response) {
+              response.data.count++;
+              $http.post("http://whatson.peoplesoft.co.za/device/update/" + response.data.id, {count: response.data.count}).
+                then(function(response) {
+                  console.log("Success",response);
+                  global.me = response.data;
+                  t.hide();
+                }, function(response) {
+                  console.log("Error",response);
+                });    
+            }, function(response) {
+              console.log("Error",response);
+            });
+        }
+        else
+        {
+          t.register(function(me){
+            global.me = me;
+            window.localStorage.deviceId = me.id;
+            t.login();
+          });
+        }
+      };
+      ionic.Platform.ready(function(){
+        t.login();
+      });
+
+    })
+    .controller('EventCtrl', function($scope, $http) {
+      var t = this;
+
+      t.doRefresh = function(cb) 
+      {
+        global.show();
+        $http.get("http://whatson.peoplesoft.co.za/event").
+          then(function(response) {
+            t.events = response.data;
+            $scope.$broadcast('scroll.refreshComplete');
+            global.hide();
+          }, function(response) {
+            console.log('Error',response);
+          });  
+      };
+      
+      t.like = function(item)
+      {
+        // alert("Like " + id);
+        $http.get("http://whatson.peoplesoft.co.za/event/" + item.id + "/likes/add/" + global.me.id).
+          then(function(response){
+            $scope.$applyAsync(function(){
+
+              $http.get("http://whatson.peoplesoft.co.za/device/" + window.localStorage.deviceId).
+                then(function(response) {
+                  global.me = response.data;
+                }, function(response) {
+                  console.log("Error",response);
+                });
+
+              console.log("ITEM",item);
+            });
+            console.log("Like Successful",response);
+          }, function(response){
+            console.log("Like Error",response);
+          });
+      }
+
+      t.dislike = function(item)
+      {
+        $http.get("http://whatson.peoplesoft.co.za/event/" + item.id + "/likes/remove/" + window.localStorage.deviceId).
+          then(function(response){
+            $scope.$applyAsync(function(){
+
+              $http.get("http://whatson.peoplesoft.co.za/device/" + window.localStorage.deviceId).
+                then(function(response) {
+                  global.me = response.data;
+                }, function(response) {
+                  console.log("Error",response);
+                });
+            
+            });
+            console.log("Like Successful",response);
+          }, function(response){
+            console.log("Like Error",response);
+          });
+      }
+
+      t.isLiked = function(e)
+      {
+        console.log(global.me);
+        for (var i = 0; i < global.me.likes.length; i++) {
+          if (global.me.likes[i].id == e.id)
+            return false;
+        };
+        return true;
+      }
+
+//      global.show('Loading Events ...');
+      
+      // t.doRefresh(function(){
+      //   global.hide();
+      // });
+
+    })
+    .controller('SpecialCtrl', function($scope, $http) {
+      var t = this;
+
+      t.doRefresh = function(cb) 
+      {
+        global.show();
+        $http.get("http://whatson.peoplesoft.co.za/special").
+          then(function(response) {
+            t.specials = response.data;
+            $scope.$broadcast('scroll.refreshComplete');
+            global.hide();
+          }, function(response) {
+            console.log('Error',response);
+          });  
+      };
+      
+      t.like = function(item)
+      {
+        // alert("Like " + id);
+        $http.get("http://whatson.peoplesoft.co.za/special/" + item.id + "/likes/add/" + global.me.id).
+          then(function(response){
+            $scope.$applyAsync(function(){
+
+              $http.get("http://whatson.peoplesoft.co.za/device/" + window.localStorage.deviceId).
+                then(function(response) {
+                  global.me = response.data;
+                }, function(response) {
+                  console.log("Error",response);
+                });
+
+              console.log("ITEM",item);
+            });
+            console.log("Like Successful",response);
+          }, function(response){
+            console.log("Like Error",response);
+          });
+      }
+
+      t.dislike = function(item)
+      {
+        $http.get("http://whatson.peoplesoft.co.za/special/" + item.id + "/likes/remove/" + window.localStorage.deviceId).
+          then(function(response){
+            $scope.$applyAsync(function(){
+
+              $http.get("http://whatson.peoplesoft.co.za/device/" + window.localStorage.deviceId).
+                then(function(response) {
+                  global.me = response.data;
+                }, function(response) {
+                  console.log("Error",response);
+                });
+            
+            });
+            console.log("Like Successful",response);
+          }, function(response){
+            console.log("Like Error",response);
+          });
+      }
+
+      t.isLiked = function(e)
+      {
+        console.log(global.me);
+        for (var i = 0; i < global.me.sLikes.length; i++) {
+          if (global.me.sLikes[i].id == e.id)
+            return false;
+        };
+        return true;
+      }
+
+    })
+    .controller('MapCtrl', function($scope, $http) {
+      var t = this;
+      
+      t.doRefresh = function() 
+      {
+        // alert('Refreshed Likes!');
+        $scope.$broadcast('scroll.refreshComplete');
+        t = {
+            defaults: {
+              tileLayer: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+              maxZoom: 18,
+              zoomControlPosition: 'bottomleft'
+            },
+            markers : {},
+            events: {
+              map: {
+                enable: ['context'],
+                logic: 'emit'
+              }
+            }
+          };    
+      };
+
+      t.unSetMap = function()
+      {
+        t = {};
+      }
+
+    });
+  </script>
+</html>
