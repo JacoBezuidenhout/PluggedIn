@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html ng-app="pluggedIN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <title></title>
+
+    <link href="lib/ionic/css/ionic.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/leaflet.css">
+
+    <!-- IF using Sass (run gulp sass first), then uncomment below and remove the CSS includes above
+    <link href="css/ionic.app.css" rel="stylesheet">
+    -->
+
+    <!-- ionic/angularjs js -->
+    <script src="lib/ionic/js/ionic.bundle.js"></script>
+    <script src="js/ionic-image-lazy-load.js"></script>
+    <script src="js/ng-cordova.min.js"></script>
+    
+    <!-- cordova script (this will be a 404 during development) -->
+    <script src="cordova.js"></script>
+
+    <script src="js/leaflet.js"></script>
+    <script src="js/angular-leaflet-directive.min.js"></script>
+
+    <!-- your app's js -->
+    <script src="js/app.js"></script>
+
+
+    <script src="js/event.js"></script>
+    <script src="js/special.js"></script>
+    <script src="js/map.js"></script>
+  </head>
+  <body ng-controller="DeviceCtrl as device" style="padding-bottom:10%;">
+
+    <ion-header-bar class="bar-dark">
+      <h1 class="title">{{device.title}}</h1>
+    </ion-header-bar>
+
+    <script id="event-modal.html" type="text/ng-template">
+      <div class="modal" on-swipe-up="device.closeEventModal()">
+        <button class="button button-full button-dark" ng-click="device.closeEventModal()">Done</button>
+        <div class="list card">
+          <div class="item item-body">
+            <img class="full-image" src="{{device.e.img}}">
+            <p>
+              {{device.e.body}}
+            </p>
+            <p>
+              <a href="#" class="subdued">{{device.e.likeCount}} Like(s)</a>
+            </p>
+          </div>
+
+          <div class="item tabs tabs-secondary tabs-icon-left">
+            <a ng-show="device.e.liked" class="tab-item calm" ng-click="device.e.dislike(device.e)" href="#">
+              <i class="icon ion-thumbsup"></i>
+              Like
+            </a>
+            <a ng-hide="device.e.liked" class="tab-item" ng-click="device.e.like(device.e)" href="#">
+              <i class="icon ion-thumbsup"></i>
+              Like
+            </a>
+            <a class="tab-item" href="#" ng-click="device.shareEvent(device.e);">
+              <i class="icon ion-share"></i>
+              Share
+            </a>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <script id="special-modal.html" type="text/ng-template">
+      <div class="modal" on-swipe-up="device.closeSpecialModal()">
+        <button class="button button-full button-dark" ng-click="device.closeSpecialModal()">Done</button>
+        <div class="list card">
+          <div class="item item-body">
+            <img class="full-image" src="{{device.s.img}}">
+            <p>
+              {{device.s.body}}
+            </p>
+            <p>
+              <a href="#" class="subdued">{{device.s.likeCount}} Like(s)</a>
+            </p>
+          </div>
+
+          <div class="item tabs tabs-secondary tabs-icon-left">
+            <a ng-show="device.s.liked" class="tab-item calm" ng-click="device.s.dislike(device.s)" href="#">
+              <i class="icon ion-thumbsup"></i>
+              Like
+            </a>
+            <a ng-hide="device.s.liked" class="tab-item" ng-click="device.s.like(device.s)" href="#">
+              <i class="icon ion-thumbsup"></i>
+              Like
+            </a>
+            <a class="tab-item" href="#" ng-click="device.shareEvent(device.s);">
+              <i class="icon ion-share"></i>
+              Share
+            </a>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <ion-tabs class="tabs-light tabs-icon-only">
+
+        <ion-tab title="Events" ng-controller="EventCtrl as event" on-select="event.doRefresh()" icon-on="ion-ios-calendar" icon-off="ion-ios-calendar-outline">
+          <ion-nav-view>
+            <ion-content lazy-scroll="">
+            <div class="bar item-input-inset">
+              <label class="item-input-wrapper">
+                <i class="icon ion-ios-search placeholder-icon"></i>
+                <input type="search" ng-model="event.searchText" placeholder="Search">
+              </label>
+                  <select class="button button-light" ng-model="special.cat">
+                    <option value="">All</option>
+                    <option value="show">Shows</option>
+                    <option value="other">Other</option>
+                    <option value="burger">Lief</option>
+                  </select>
+              <!-- <button class="button button-clear" ng-click="event.searchText = &apos;&apos;">
+                Cancel
+              </button> -->
+            </div>
+            <ion-refresher on-refresh="event.doRefresh(console.log,true)"></ion-refresher>
+              <ion-list can-swipe="true">
+                  <a class="item item-thumbnail-left" ng-hide="event.events">
+                    <img src="">
+                    <h2>No Events Found</h2>
+                  </a>
+                  <ion-item class="item-thumbnail-left" href="#" ng-repeat="e in event.events | filter: event.searchText | filter: event.cat" ng-click="device.openEventModal(e,event.isLiked(e),event.like,event.dislike)">
+                    <img image-lazy-src="{{e.img}}">
+                    <h2><i ng-hide="event.isLiked(e)" class="icon ion-heart"></i> {{e.title}}</h2>
+                    <p class="balanced">{{e.body}}</p>
+                    <p style="position:absolute; bottom:5px"><strong>{{e.price}}</strong></p>
+                    <ion-option-button ng-show="event.isLiked(e)" class="button-info icon ion-heart" ng-click="event.like(e)"></ion-option-button>
+                    <ion-option-button ng-hide="event.isLiked(e)" class="button-balanced icon ion-heart" ng-click="event.dislike(e)"></ion-option-button>
+                    <ion-option-button class="button-positive icon ion-share" ng-click="device.shareEvent(e)"></ion-option-button>
+                  </ion-item>
+              </ion-list>
+            </ion-content>
+          </ion-nav-view>
+        </ion-tab>
+
+        <ion-tab title="Specials" ng-controller="SpecialCtrl as special" on-select="special.doRefresh()" icon-on="ion-ios-cart" icon-off="ion-ios-cart-outline">
+          <ion-nav-view>
+            <ion-content lazy-scroll="">
+              <div class="bar item-input-inset">
+                <label class="item-input-wrapper">
+                  <i class="icon ion-ios-search placeholder-icon"></i>
+                  <input type="search" ng-model="special.searchText" placeholder="Search">
+                </label>
+                  <select class="button button-light" ng-model="special.cat">
+                    <option value="">All</option>
+                    <option value="show">Shows</option>
+                    <option value="other">Other</option>
+                    <option value="burger">Lief</option>
+                  </select>
+<!--                 <button class="button button-clear" ng-click="special.searchText = &apos;&apos;">
+                  Cancel
+                </button> -->
+              </div>
+              <ion-refresher on-refresh="special.doRefresh(console.log,true)"></ion-refresher>
+              <ion-list can-swipe="true">
+                  <a class="item item-thumbnail-left" ng-hide="special.specials">
+                    <img src="" ng-click="device.show()">
+                    <h2>No Events Found</h2>
+                  </a>
+                  <ion-item class="item-thumbnail-left" href="#" ng-repeat="e in special.specials | filter: special.searchText | filter: special.cat" ng-click="device.openSpecialModal(e,special.isLiked(e),special.like,special.dislike)">
+                    <img image-lazy-src="{{e.img}}">
+                    <h2><i ng-hide="special.isLiked(e)" class="icon ion-heart"></i> {{e.title}}</h2>
+                    <p>{{e.body}}</p>
+                    <p style="position:absolute; bottom:5px"><strong>{{e.price}}</strong></p>
+                    <ion-option-button ng-show="special.isLiked(e)" class="button-info icon ion-heart" ng-click="special.like(e)"></ion-option-button>
+                    <ion-option-button ng-hide="special.isLiked(e)" class="button-balanced icon ion-heart" ng-click="special.dislike(e)"></ion-option-button>
+                    <ion-option-button class="button-positive icon ion-share" ng-click="device.share(e)"></ion-option-button>
+                  </ion-item>
+              </ion-list>
+            </ion-content>
+          </ion-nav-view>
+        </ion-tab>
+
+        <ion-tab title="Map" ng-controller="MapCtrl as map" on-select="map.doRefresh()" on-deselect="map.unSetMap()" icon-on="ion-ios-location" icon-off="ion-ios-location-outline">
+        <ion-nav-view>
+          <ion-content lazy-scroll="">
+            <leaflet defaults="map.defaults" center="map.center" markers="map.markers" ng-if="map"></leaflet>
+          </ion-content>
+        </ion-nav-view>
+        </ion-tab>
+
+    </ion-tabs>
+    
+
+
+  </body>
+</html>
